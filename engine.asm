@@ -2,6 +2,10 @@ INCLUDE "hardware.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;gameStates:
+STATE_TITLE EQU $0
+STATE_MAINGAME EQU $1
+STATE_GAMEOVER EQU $2
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -41,10 +45,15 @@ SECTION "Header", ROM0[$100]
   db $0000 ;global checksum, automatically fixed by rgbfix
 
 SECTION "WRAM", WRAM0
-isFirstFrame: ds 1
-ScrollX: ds 1
-BGPalette: ds 1
-BGBuffer: ds 2+1+100
+isFirstFrame: db
+
+gameState: db
+
+BGPalette: db
+
+wVRAMCopyDest: dw
+wVRAMCopyLen: db
+wVRAMCopyBuffer: ds 100
 SECTION "Home", ROM0[$150]
 
 Start:
@@ -53,9 +62,12 @@ Start:
   ld a, IEF_VBLANK
   ld [rIE], a
 
+  xor a, a
+  ld [wVRAMCopyLen], a
+
 .VBlankWait:
   ld a, [rLY]
-  xor 148
+  xor a, 148
   jr nz, .VBlankWait
 
   ld a, LCDCF_OFF
@@ -74,25 +86,26 @@ Start:
   or e
   jr nz, .chrLoadLoop
 
-  xor a
+  xor a, a
   ld hl, $FE00
   ld b, $A0
 .OAMResetLoop:
-  ldh [hli], a
+  ld [hli], a
   dec b
   jr nz, .OAMResetLoop
 
   ld a, LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BG8000
   ldh [rLCDC], a
 
-  xor a
+  xor a, a
   ldh [rIF], a
+  ld [gameState], a
 
   ei
   halt
   di
 
-  xor a
+  xor a, a
   ldh [rIF], a
 
   ei
@@ -103,12 +116,12 @@ Start:
   ld a, %00100111
   ldh [rOBP0], a
 
-  xor a
-  ld [ScrollX], a
-  inc a
+  ld a, 1
   ld [isFirstFrame], a
 
 InfiniteLoop:
+
+INCLUDE "firstscreens.asm"
 
   halt
   jp InfiniteLoop
@@ -121,19 +134,19 @@ VBlankInterrupt:
   push de
   push af
 
-  ld a, [BGBuffer+2]
-  or 0
-  jr z, .skipCopyBufferLoop
+  ld a, [wVRAMCopyLen] ;grab the size of the buffer being written to VRAM
+  or a, 0
+  jr z, .skipCopyBufferLoop ;if it's 0, just skip the whole process of copying the buffer to VRAM
 
-  ld c, a
+  ld c, a ;else, set up the counter, target and source addresses
 
-  ld a, [BGBuffer]
+  ld a, [wVRAMCopyDest]
   ld d, a
-  ld a, [BGBuffer+1]
+  ld a, [wVRAMCopyDest+1]
   ld e, a
 
-  ld hl, BGBuffer+3
-.copyBufferLoop:
+  ld hl, wVRAMCopyBuffer
+.copyBufferLoop: ;and enter the copy loop
   ld a, [hli]
   ld [de], a
   inc de
@@ -141,7 +154,7 @@ VBlankInterrupt:
   jr nz, .copyBufferLoop
 
   xor a
-  ld [BGBuffer+2], a
+  ld [wVRAMCopyLen], a
 .skipCopyBufferLoop
   pop af
   pop de
