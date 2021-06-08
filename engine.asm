@@ -7,6 +7,10 @@ STATE_TITLE EQU $0
 STATE_MAINGAME EQU $1
 STATE_GAMEOVER EQU $2
 
+;;;VRAMCopyTypes:
+VRAMCOPY_RAW EQU $0
+VRAMCOPY_POINTER EQU $1
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 SECTION "Vectors", ROM0[$40]
@@ -51,6 +55,7 @@ gameState: db
 
 BGPalette: db
 
+wVRAMCopyType: db
 wVRAMCopyDest: dw
 wVRAMCopyLen: db
 wVRAMCopyBuffer: ds 100
@@ -140,12 +145,23 @@ VBlankInterrupt:
 
   ld c, a ;else, set up the counter, target and source addresses
 
+  ld hl, wVRAMCopyBuffer
+
+  ld a, [wVRAMCopyType]
+  or 0
+  jr z, .skipPointerDereferencing
+
+  ld d, [hl]
+  inc hl
+  ld e, [hl]
+  ld h, d
+  ld l, e
+
+.skipPointerDereferencing:
   ld a, [wVRAMCopyDest]
   ld d, a
   ld a, [wVRAMCopyDest+1]
   ld e, a
-
-  ld hl, wVRAMCopyBuffer
 .copyBufferLoop: ;and enter the copy loop
   ld a, [hli]
   ld [de], a
@@ -164,7 +180,7 @@ VBlankInterrupt:
 
 
 Characters:
-;INCBIN "background.chr"
-;INCBIN "shared.chr"
+INCBIN "background.chr"
+INCBIN "shared.chr"
 INCBIN "sprite.chr"
 EndCharacters:
