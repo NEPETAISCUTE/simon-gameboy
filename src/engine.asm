@@ -1,4 +1,4 @@
-INCLUDE "hardware.inc"
+INCLUDE "src/lib/hardware.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -126,7 +126,7 @@ Start:
 
 InfiniteLoop:
 
-INCLUDE "firstscreens.asm"
+INCLUDE "src/firstscreens.asm"
 
   halt
   jp InfiniteLoop
@@ -180,7 +180,7 @@ VBlankInterrupt:
 
 
 Characters:
-INCBIN "background.chr"
-INCBIN "shared.chr"
-INCBIN "sprite.chr"
+INCBIN "src/assets/background.chr"
+INCBIN "src/assets/shared.chr"
+INCBIN "src/assets/sprite.chr"
 EndCharacters:
