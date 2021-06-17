@@ -55,6 +55,8 @@ gameState: db
 
 BGPalette: db
 
+Joypad1:: db
+
 wVRAMCopyType: db
 wVRAMCopyDest: dw
 wVRAMCopyLen: db
@@ -128,6 +130,7 @@ InfiniteLoop:
 
 INCLUDE "src/firstscreens.asm"
 
+  call ReadJoypad
   halt
   jp InfiniteLoop
 
