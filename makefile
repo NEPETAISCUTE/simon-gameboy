@@ -3,10 +3,9 @@ NAME = simon
 
 any:
 	rgbasm -o $(NAME).o src/$(ENGINE).asm
-	rgblink -o $(NAME).gb $(NAME).o
+	rgbasm -o joypad.o src/joypad.asm
+	rgblink -o $(NAME).gb $(NAME).o joypad.o
 	rgbfix $(NAME).gb -p 255 -v
-
-
 
 clean:
 	rm *.o
