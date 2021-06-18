@@ -2,6 +2,15 @@ INCLUDE "src/lib/hardware.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;not really useful, but still better than having numbers in code i guess?
+LY_VBLANK EQU 148
+SIZE_OAM EQU $A0
+PALETTE_BLACK_ON_WHITE EQU %00100111
+
+;;;boolean
+False EQU $0
+True EQU $1
+
 ;;;gameStates:
 STATE_TITLE EQU $0
 STATE_MAINGAME EQU $1
@@ -10,6 +19,10 @@ STATE_GAMEOVER EQU $2
 ;;;VRAMCopyTypes:
 VRAMCOPY_RAW EQU $0
 VRAMCOPY_POINTER EQU $1
+
+;;;joypad constants:
+START_BUTTON EQU %10000000
+SELECT_BUTTON EQU %01000000
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -44,16 +57,14 @@ SECTION "Header", ROM0[$100]
 
   db $00 ;version number
 
-  db $00 ;header checksum, automatically fixed by rgbfix
+  ds 1 ;header checksum, automatically fixed by rgbfix
 
-  db $0000 ;global checksum, automatically fixed by rgbfix
+  ds 2 ;global checksum, automatically fixed by rgbfix
 
 SECTION "WRAM", WRAM0
 isFirstFrame: db
 
 gameState: db
-
-BGPalette: db
 
 Joypad1:: db
 
@@ -74,13 +85,13 @@ Start:
 
 .VBlankWait:
   ld a, [rLY]
-  xor a, 148
+  cp a, LY_VBLANK
   jr nz, .VBlankWait
 
   ld a, LCDCF_OFF
   ld [rLCDC], a
 
-  ld hl, $8000
+  ld hl, _VRAM
   ld bc, Characters
   ld de, EndCharacters - Characters
 .chrLoadLoop:
@@ -94,8 +105,8 @@ Start:
   jr nz, .chrLoadLoop
 
   xor a, a
-  ld hl, $FE00
-  ld b, $A0
+  ld hl, _OAMRAM
+  ld b, SIZE_OAM
 .OAMResetLoop:
   ld [hli], a
   dec b
@@ -118,12 +129,10 @@ Start:
   ei
   halt
 
-  ld a, %11100100
-  ld [BGPalette], a
-  ld a, %00100111
+  ld a, PALETTE_BLACK_ON_WHITE
   ldh [rOBP0], a
 
-  ld a, 1
+  ld a, True
   ld [isFirstFrame], a
 
 InfiniteLoop:
@@ -131,6 +140,22 @@ InfiniteLoop:
 INCLUDE "src/firstscreens.asm"
 
   call ReadJoypad
+
+  ld a, [gameState]
+  cp a, STATE_TITLE
+  jr nz, .skipTitleLogic
+
+  ld a, [Joypad1]
+  and a, START_BUTTON
+  jr z, .skipTitleLogic
+
+  ld a, STATE_MAINGAME
+  ld [gameState], a
+
+  ld a, True
+  ld [isFirstFrame], a
+
+.skipTitleLogic
   halt
   jp InfiniteLoop
 
@@ -143,7 +168,7 @@ VBlankInterrupt:
   push af
 
   ld a, [wVRAMCopyLen] ;grab the size of the buffer being written to VRAM
-  or a, 0
+  cp a, 0
   jr z, .skipCopyBufferLoop ;if it's 0, just skip the whole process of copying the buffer to VRAM
 
   ld c, a ;else, set up the counter, target and source addresses
@@ -151,7 +176,7 @@ VBlankInterrupt:
   ld hl, wVRAMCopyBuffer
 
   ld a, [wVRAMCopyType]
-  or 0
+  cp a, 0
   jr z, .skipPointerDereferencing
 
   ld d, [hl]
@@ -165,6 +190,7 @@ VBlankInterrupt:
   ld d, a
   ld a, [wVRAMCopyDest+1]
   ld e, a
+
 .copyBufferLoop: ;and enter the copy loop
   ld a, [hli]
   ld [de], a
