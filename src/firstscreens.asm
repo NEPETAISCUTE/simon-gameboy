@@ -29,10 +29,10 @@
   xor a, a
   ld [wVRAMCopyType], a
   ld hl, wVRAMCopyBuffer
-.zerofillBuffer
+.zerofillBufferTitleScreen
   ld [hli], a
   dec c
-  jr nz, .zerofillBuffer
+  jr nz, .zerofillBufferTitleScreen
 
   halt
 
@@ -83,10 +83,10 @@
   xor a, a
   ld [wVRAMCopyType], a
   ld hl, wVRAMCopyBuffer
-.zerofillBuffer2
+.zerofillBufferMaingame
   ld [hli], a
   dec c
-  jr nz, .zerofillBuffer2
+  jr nz, .zerofillBufferMaingame
 
   halt
   jr .skipFirstScreenLoading
