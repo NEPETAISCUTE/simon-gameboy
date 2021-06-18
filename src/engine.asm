@@ -137,7 +137,7 @@ Start:
 
 TitleScreenLoop:
 
-INCLUDE "src/firsttitlescreen.asm"
+  INCLUDE "src/titlescreen.asm"
 
   call ReadJoypad
 
@@ -166,7 +166,7 @@ INCLUDE "src/firsttitlescreen.asm"
 
 MainGameLoop:
 
-INCLUDE "firstgamescreen.asm"
+INCLUDE "src/gamesetup.asm"
 
   call ReadJoypad
 
