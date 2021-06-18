@@ -135,9 +135,9 @@ Start:
   ld a, True
   ld [isFirstFrame], a
 
-InfiniteLoop:
+TitleScreenLoop:
 
-INCLUDE "src/firstscreens.asm"
+INCLUDE "src/firsttitlescreen.asm"
 
   call ReadJoypad
 
@@ -157,9 +157,21 @@ INCLUDE "src/firstscreens.asm"
 
 .skipTitleLogic
   halt
-  jp InfiniteLoop
 
+  ld a, [gameState]
+  cp a, 1
+  jr z, MainGameLoop
 
+  jp TitleScreenLoop
+
+MainGameLoop:
+
+INCLUDE "firstgamescreen.asm"
+
+  call ReadJoypad
+
+  halt
+  jp MainGameLoop
 
 VBlankInterrupt:
   push hl
