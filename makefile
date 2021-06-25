@@ -4,7 +4,8 @@ NAME = simon
 any:
 	rgbasm -o $(NAME).o src/$(ENGINE).asm
 	rgbasm -o joypad.o src/joypad.asm
-	rgblink -o $(NAME).gb $(NAME).o joypad.o
+	rgbasm -o rng.o src/lib/rng.asm
+	rgblink -o $(NAME).gb $(NAME).o joypad.o rng.o
 	rgbfix $(NAME).gb -p 255 -v
 
 clean:
