@@ -20,9 +20,9 @@ STATE_GAMEOVER EQU $2
 VRAMCOPY_RAW EQU $0
 VRAMCOPY_POINTER EQU $1
 
-;;;joypad constants:
-START_BUTTON EQU %10000000
-SELECT_BUTTON EQU %01000000
+;;gameplay timer maxes:
+TIMER_DISPLAY_MAX EQU 60
+TIMER_PRESS_MAX EQU 255
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -62,18 +62,37 @@ SECTION "Header", ROM0[$100]
   ds 2 ;global checksum, automatically fixed by rgbfix
 
 SECTION "WRAM", WRAM0
-isFirstFrame: db
 
-gameState: db
+;;engine stuff
+wIsFirstFrame: db
 
-Joypad1:: db
+wGameState: db
 
-FrameCNT:: dw
+wJoypad1:: db
+
+wFrameCNT:: dw
 
 wVRAMCopyType: db
 wVRAMCopyDest: dw
 wVRAMCopyLen: db
 wVRAMCopyBuffer: ds 100
+
+;;game variables stuff
+wIsGeneratingNewInput:: db
+
+wInputLength:: db
+
+wLevel:: db
+
+wCurrentInputDisplayed:: db
+
+wCurrentInputToPress:: db
+
+wTimerDisplay:: db
+
+wTimerToPress:: dw
+
+wInputList:: ds 255
 
 SECTION "Home", ROM0[$150]
 
@@ -120,7 +139,10 @@ Start:
 
   xor a, a
   ldh [rIF], a
-  ld [gameState], a
+  ld [wFrameCNT], a
+  ld [wFrameCNT+1], a
+  ld [wGameState], a
+  ld [wCurrentInputDisplayed], a
 
   ei
   halt
@@ -136,7 +158,7 @@ Start:
   ldh [rOBP0], a
 
   ld a, True
-  ld [isFirstFrame], a
+  ld [wIsFirstFrame], a
 
 TitleScreenLoop:
 
@@ -144,24 +166,24 @@ TitleScreenLoop:
 
   call ReadJoypad
 
-  ld a, [gameState]
+  ld a, [wGameState]
   cp a, STATE_TITLE
   jr nz, .skipTitleLogic
 
-  ld a, [Joypad1]
-  and a, START_BUTTON
+  ld a, [wJoypad1]
+  and a, PADF_START
   jr z, .skipTitleLogic
 
   ld a, STATE_MAINGAME
-  ld [gameState], a
+  ld [wGameState], a
 
   ld a, True
-  ld [isFirstFrame], a
+  ld [wIsFirstFrame], a
 
 .skipTitleLogic
   halt
 
-  ld a, [gameState]
+  ld a, [wGameState]
   cp a, 1
   jr z, MainGameLoop
 
@@ -171,6 +193,16 @@ MainGameLoop:
 
 INCLUDE "src/gamesetup.asm"
 
+  ld a, [wIsGeneratingNewInput]
+  cp a, 0
+
+  jr z, .skipGeneration
+
+  call generateInputList
+
+  INCLUDE "src/renderInGame.asm"
+
+.skipGeneration:
   call ReadJoypad
 
   halt
@@ -218,15 +250,44 @@ VBlankInterrupt:
 .skipCopyBufferLoop
 
   ;;;just a framecounter
-  ld a, [FrameCNT]
+  ld a, [wFrameCNT]
   ld b, a
-  ld a, [FrameCNT+1]
+  ld a, [wFrameCNT+1]
   ld c, a
   inc bc
   ld a, b
-  ld [FrameCNT], a
+  ld [wFrameCNT], a
   ld a, c
-  ld [FrameCNT+1], a
+  ld [wFrameCNT+1], a
+
+  ld a, [wTimerToPress]
+  ld d, a
+  ld a, [wTimerToPress+1]
+  or a, d
+  jr z, .skipPressTimerLogic
+
+  ld a, [wTimerToPress]
+  ld e, a
+
+  dec de
+
+  ld a, e
+  ld [wTimerToPress], a
+  ld a, d
+  ld [wTimerToPress], a
+
+
+.skipPressTimerLogic
+
+  ld a, [wTimerDisplay]
+  cp a, 0
+  jr z, .skipDisplayTimerLogic
+
+  dec a
+
+  ld [wTimerDisplay], a
+
+.skipDisplayTimerLogic
 
   pop af
   pop de
