@@ -1,14 +1,19 @@
-  ld a, [isFirstFrame]
+  ld a, [wIsFirstFrame]
   cp a, False
   jr z, .skipFirstScreenLoading
 
+  ld a, True
+  ld [wIsGeneratingNewInput], a
+  ld [wInputLength], a
+  ld [wLevel], a
+
 .maingameScreenLoading
   xor a, a
-  ld [isFirstFrame], a
+  ld [wIsFirstFrame], a
 
-  ld a, [FrameCNT]
+  ld a, [wFrameCNT]
   ld b, a
-  ld a, [FrameCNT+1]
+  ld a, [wFrameCNT+1]
   ld c, a
 
   call srand
