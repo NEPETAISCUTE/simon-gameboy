@@ -68,10 +68,13 @@ gameState: db
 
 Joypad1:: db
 
+FrameCNT:: dw
+
 wVRAMCopyType: db
 wVRAMCopyDest: dw
 wVRAMCopyLen: db
 wVRAMCopyBuffer: ds 100
+
 SECTION "Home", ROM0[$150]
 
 Start:
@@ -213,6 +216,18 @@ VBlankInterrupt:
   xor a
   ld [wVRAMCopyLen], a
 .skipCopyBufferLoop
+
+  ;;;just a framecounter
+  ld a, [FrameCNT]
+  ld b, a
+  ld a, [FrameCNT+1]
+  ld c, a
+  inc bc
+  ld a, b
+  ld [FrameCNT], a
+  ld a, c
+  ld [FrameCNT+1], a
+
   pop af
   pop de
   pop bc
