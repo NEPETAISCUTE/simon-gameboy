@@ -6,6 +6,13 @@
   xor a, a
   ld [isFirstFrame], a
 
+  ld a, [FrameCNT]
+  ld b, a
+  ld a, [FrameCNT+1]
+  ld c, a
+
+  call srand
+
   ld a, $9A
   ld [wVRAMCopyDest], a
   ld a, $04
