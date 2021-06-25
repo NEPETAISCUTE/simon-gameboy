@@ -1,10 +1,10 @@
-  ld a, [isFirstFrame] ;checks if it's the first frame of that specific game state
+  ld a, [wIsFirstFrame] ;checks if it's the first frame of that specific game state
   cp a, False
   jp z, .skipFirstScreenLoading
 
 .titleScreenLoading
   xor a, a
-  ld [isFirstFrame], a
+  ld [wIsFirstFrame], a
 
   ld a, $99
   ld [wVRAMCopyDest], a
