@@ -16,6 +16,7 @@ ReadJoypad::
   ldh a, [rP1]
   cpl
   and a, JOYPADMASK
+  swap a
   ld b, a
 
   ld a, P1F_GET_BTN
@@ -29,10 +30,10 @@ ReadJoypad::
   ldh a, [rP1]
   cpl
   and a, JOYPADMASK
-  swap a
+
 
   or a, b
-  ld [Joypad1], a
+  ld [wJoypad1], a
 
   ld a, P1F_GET_NONE
   ld [rP1], a
