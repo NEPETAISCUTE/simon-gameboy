@@ -23,7 +23,11 @@ Multiply::
 ;;a is shifted b times
 ;;f, a and b are trashed
 LoopShiftLeft::
-  sla a
-  dec b
-  jr nz, LoopShiftLeft
+  cp a, 0
+  jr z, .end
+.loop:
+  sla b
+  dec a
+  jr nz, .loop
+.end:
   ret
