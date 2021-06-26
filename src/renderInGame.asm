@@ -2,6 +2,12 @@
   cp a, 0
   jr nz, .skipDisplay
 
+  ld a, [wTimerDisplay]
+  ld d, a
+  ld a, [wTimerDisplay+1]
+  or a, d
+  jr z, .clearDisplay
+
   ld a, [wCurrentInputDisplayed]
   ld hl, wInputList
   ld e, a
@@ -68,5 +74,12 @@
   ld [hli], a
   inc hl
   jr .skipDisplay
+
+.clearDisplay:
+  ld a, $00
+  ld [$9906], a
+  ld [$9908], a
+  ld [$990A], a
+  ld [$990C], a
 
 .skipDisplay:
