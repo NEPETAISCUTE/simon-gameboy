@@ -4,8 +4,11 @@
 
   ld a, True
   ld [wIsGeneratingNewInput], a
-  ld [wInputLength], a
   ld [wLevel], a
+  ld [wInputLength], a
+
+  ld a, 3
+  ld [wMaxInputLength], a
 
 .maingameScreenLoading
   xor a, a
