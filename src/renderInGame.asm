@@ -18,7 +18,7 @@
   ld a, [hl]
   ld b, a
 
-  ld hl, $9908
+  ld hl, $9906
 
   and a, PADF_A
   jr nz, .displayA
@@ -45,28 +45,28 @@
 
   ld a, $04
   ld [hli], a
-
+  inc hl
   jr .afterDisplayAJump
 
 .displayB:
 
   ld a, $05
   ld [hli], a
-
+  inc hl
   jr .afterDisplayBJump
 
 .displaySelect:
 
   ld a, $08
   ld [hli], a
-
+  inc hl
   jr .afterDisplaySelectJump
 
 .displayStart:
 
   ld a, $17
   ld [hli], a
-
+  inc hl
   jr .skipDisplay
 
 .skipDisplay:
