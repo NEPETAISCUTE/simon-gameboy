@@ -1,6 +1,7 @@
+
+TIMER_DISPLAY_MAX EQU $0050
+
 SECTION "input generator", ROM0
-
-
 
 generateInputList::
   ld a, [wInputLength]
@@ -22,10 +23,11 @@ generateInputList::
   swap a
   and %00000011
 
-  ld b, a
-  ld a, 1
+  ld b, 1
+
   call LoopShiftLeft
 
+  ld a, b
   ld [de], a
   inc de
   dec c
@@ -52,3 +54,9 @@ generateInputList::
 .end:
   xor a, a
   ld [wIsGeneratingNewInput], a
+
+  ld hl, TIMER_DISPLAY_MAX
+  ld a, h
+  ld [wTimerDisplay], a
+  ld a, l
+  ld [wTimerDisplay+1], a
