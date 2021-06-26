@@ -21,8 +21,11 @@ VRAMCOPY_RAW EQU $0
 VRAMCOPY_POINTER EQU $1
 
 ;;gameplay timer maxes:
-TIMER_DISPLAY_MAX EQU 60
 TIMER_PRESS_MAX EQU 255
+TIMER_MULTI_PRESS_MAX EQU 6
+
+;;correct check:
+UNKNOWN EQU $FF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -64,35 +67,35 @@ SECTION "Header", ROM0[$100]
 SECTION "WRAM", WRAM0
 
 ;;engine stuff
-wIsFirstFrame: db
+wIsFirstFrame: db ;C000
 
-wGameState: db
+wGameState: db ;C001
 
-wJoypad1:: db
+wJoypad1:: db ;C002
 
-wFrameCNT:: dw
+wFrameCNT:: dw ;C003
 
-wVRAMCopyType: db
-wVRAMCopyDest: dw
-wVRAMCopyLen: db
-wVRAMCopyBuffer: ds 100
+wVRAMCopyType: db ;C005
+wVRAMCopyDest: dw ;C006
+wVRAMCopyLen: db ;C008
+wVRAMCopyBuffer: ds 100 ;C009 - C06D
 
 ;;game variables stuff
-wIsGeneratingNewInput:: db
+wIsGeneratingNewInput:: db ;C06D
+wIsInputCorrect:: db ;C06E
 
-wInputLength:: db
+wInputLength:: db ;C06F
+wMaxInputLength:: db ;C070
+wLevel:: db ;C071
 
-wLevel:: db
+wCurrentInputDisplayed:: db ;C072
+wCurrentInputToPress:: db ;C073
 
-wCurrentInputDisplayed:: db
+wTimerDisplay:: dw ;C074
+wTimerToPress:: dw ;C076
+wTimerMultiPress:: db ;C078
 
-wCurrentInputToPress:: db
-
-wTimerDisplay:: db
-
-wTimerToPress:: dw
-
-wInputList:: ds 255
+wInputList:: ds 255 ;C079 - C176
 
 SECTION "Home", ROM0[$150]
 
@@ -143,6 +146,12 @@ Start:
   ld [wFrameCNT+1], a
   ld [wGameState], a
   ld [wCurrentInputDisplayed], a
+  ld [wTimerDisplay], a
+  ld [wTimerDisplay+1], a
+  ld [wTimerToPress], a
+  ld [wTimerToPress+1], a
+  ld [wTimerMultiPress], a
+  ld [wIsInputCorrect], a
 
   ei
   halt
@@ -200,9 +209,8 @@ INCLUDE "src/gamesetup.asm"
 
   call generateInputList
 
-  INCLUDE "src/renderInGame.asm"
-
 .skipGeneration:
+  INCLUDE "src/renderInGame.asm"
   call ReadJoypad
 
   halt
@@ -272,20 +280,38 @@ VBlankInterrupt:
   dec de
 
   ld a, e
-  ld [wTimerToPress], a
+  ld [wTimerToPress+1], a
   ld a, d
   ld [wTimerToPress], a
 
+  ld a, [wIsInputCorrect]
+  cp a, $FF
+  jr nz, .skipPressTimerLogic
+
+  ld a, [wJoypad1]
+  and a, %00001111
+  jr z, .skipPressTimerLogic
+
+  ld a, [wTimerMultiPress]
+  dec a
+  ld [wTimerMultiPress], a
+
 
 .skipPressTimerLogic
-
   ld a, [wTimerDisplay]
-  cp a, 0
+  ld b, a
+  ld a, [wTimerDisplay+1]
+  or a, b
   jr z, .skipDisplayTimerLogic
 
-  dec a
+  ld a, [wTimerDisplay+1]
+  ld c, a
+  dec bc
 
+  ld a, b
   ld [wTimerDisplay], a
+  ld a, c
+  ld [wTimerDisplay+1], a
 
 .skipDisplayTimerLogic
 
